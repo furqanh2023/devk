@@ -32,7 +32,10 @@ import StudentNotificationsPage from './pages/student/StudentNotificationsPage';
 import { askText, showMessage } from './utils/sweetAlert';
 import './styles/app.css';
 
-const ADMIN_UID = process.env.REACT_APP_ADMIN_UID || '';
+// Keep the designated admin recognizable in Vercel builds even when the local .env file is not deployed.
+// Firestore rules still enforce admin privileges server-side.
+const DEFAULT_ADMIN_UID = 'RB2xlRBlJEOwcBu1ENDJBNmYMMF3';
+const ADMIN_UID = String(process.env.REACT_APP_ADMIN_UID || DEFAULT_ADMIN_UID).trim();
 const demoMode = process.env.REACT_APP_DEMO_MODE === 'true';
 const demoBatches = demoMode ? [{id:'demo-batch-1',code:'DEVK-INT-06',track:'Frontend Development',start:'2026-10-01',end:'2026-12-31',capacity:24,studentIds:[],status:'Active',description:'React, accessibility and production workflows.'}] : [];
 export default function App(){

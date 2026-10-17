@@ -19,3 +19,12 @@ Important:
 - This patch has not been published to Firebase automatically.
 - Do not make the database public or use test-mode rules.
 - If permission-denied persists after publishing, inspect the exact failing document operation in the browser console; a write to a different collection would need its own narrowly scoped rule.
+
+
+VERCEL ADMIN ROUTING FIX
+- The app now has the designated admin UID as a fallback when REACT_APP_ADMIN_UID is not configured in Vercel. This fixes production builds where local .env is not included.
+- Recommended: in Vercel Project Settings > Environment Variables, set REACT_APP_ADMIN_UID to RB2xlRBlJEOwcBu1ENDJBNmYMMF3 for Production and Preview, then redeploy.
+- Confirm the same UID is used in Firestore Rules. Do not loosen rules to fix permission-denied.
+- After deployment, signing in with this UID should route to /admin. Student accounts should continue to route to /student.
+
+GitHub hygiene: keep .env private and do not commit it. Use .env.example as a template for local setup. Vercel production settings should use the Environment Variables panel.
