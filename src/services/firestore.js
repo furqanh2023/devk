@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, where, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, where, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export const applicationIdFor = (uid) => `application_${uid}`;
@@ -10,6 +10,8 @@ export const readOwnApplication = async (uid) => {
 export const saveOwnApplication = (uid, data) => { const fields = { ...(data || {}) }; delete fields.id; return setDoc(doc(db, 'applications', applicationIdFor(uid)), { ...fields, uid, updatedAt: serverTimestamp() }, { merge: true }); };
 export const saveRecord = (collectionName, id, data) => setDoc(doc(db, collectionName, id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
 export const watchCollection = (name, callback, onError) => onSnapshot(collection(db, name), (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), onError);
+// Students subscribe only to certificates whose owner ID matches their authenticated UID.
+export const watchOwnCertificates = (uid, callback, onError) => onSnapshot(query(collection(db, 'certificates'), where('studentId', '==', uid)), (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), onError);
 export const findPublicCertificate = async (code) => {
   const trimmed = String(code || '').trim();
   if (!trimmed) return null;
@@ -23,3 +25,39 @@ export const findPublicCertificate = async (code) => {
 };
 
 export const watchOwnNotifications = (uid, callback, onError) => onSnapshot(query(collection(db, 'notifications'), where('uid', '==', uid)), (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), onError);
+
+
+export const watchOwnEnrollmentRequests = (uid, callback, onError) => onSnapshot(
+  query(collection(db, 'enrollmentRequests'), where('uid', '==', uid)),
+  (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+  onError
+);
+
+// Commit the certificate, public verification record, and completion markers atomically.
+export const commitCertificateCompletion = async ({ certificate, publicCertificate, studentId, student, application }) => {
+  const batch = writeBatch(db);
+  const certificateRef = doc(db, 'certificates', certificate.id);
+  const publicRef = doc(db, 'publicCertificates', publicCertificate.certificateId);
+  batch.set(certificateRef, { ...certificate, updatedAt: serverTimestamp() }, { merge: true });
+  batch.set(publicRef, { ...publicCertificate, updatedAt: serverTimestamp() }, { merge: true });
+  if (studentId && application) {
+    batch.set(doc(db, 'applications', applicationIdFor(studentId)), { ...application, updatedAt: serverTimestamp() }, { merge: true });
+  }
+  if (studentId && student) {
+    batch.set(doc(db, 'students', student.id || studentId), { ...student, updatedAt: serverTimestamp() }, { merge: true });
+  }
+  await batch.commit();
+};
+
+// Keep re-enrollment approval and its current application/student state in sync.
+export const commitEnrollmentApproval = async ({ requestId, request, applicationUid, application, student }) => {
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'enrollmentRequests', requestId), { ...request, updatedAt: serverTimestamp() }, { merge: true });
+  if (applicationUid && application) {
+    batch.set(doc(db, 'applications', applicationIdFor(applicationUid)), { ...application, updatedAt: serverTimestamp() }, { merge: true });
+  }
+  if (applicationUid && student) {
+    batch.set(doc(db, 'students', student.id || applicationUid), { ...student, updatedAt: serverTimestamp() }, { merge: true });
+  }
+  await batch.commit();
+};

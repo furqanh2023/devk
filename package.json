@@ -1,6 +1,6 @@
 {
   "name": "devk-interncore",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "private": true,
   "description": "DEVK InternCore internship application, batch and certificate verification platform",
   "dependencies": {

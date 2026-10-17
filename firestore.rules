@@ -10,10 +10,6 @@ service cloud.firestore {
         && request.auth.uid == 'RB2xlRBlJEOwcBu1ENDJBNmYMMF3';
     }
 
-    function owns(uid) {
-      return signedIn() && request.auth.uid == uid;
-    }
-
     // Only these fields may be changed by the owner in their profile.
     // Email, UID, application status, batch assignment, serials and
     // certificate identifiers are deliberately excluded from this list.
@@ -88,12 +84,65 @@ service cloud.firestore {
     }
 
     match /certificates/{certificateId} {
-      allow read, create, update, delete: if isAdmin();
+      // Admins manage the registry; students can read only records explicitly assigned to their own UID.
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.studentId == request.auth.uid)
+        || (signedIn() && resource.data.studentUid == request.auth.uid);
+      allow create, update, delete: if isAdmin();
     }
 
     match /publicCertificates/{certificateId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    // A student can request the next internship only after a verified
+    // completion certificate exists for their current internship cycle.
+    function enrollmentApplication(uid) {
+      // Completion and cycle markers are mirrored to students/{uid} when
+      // a certificate is issued or the next internship is approved.
+      // Use this canonical UID-based document path; Firestore Rules cannot
+      // interpolate a variable inside a literal path segment like application_$(uid).
+      return get(/databases/$(database)/documents/students/$(uid)).data;
+    }
+
+    function hasCompletedInternship(uid) {
+      let app = enrollmentApplication(uid);
+      let certId = app.get('certificateId', '');
+      return (app.get('internshipCompleted', false) == true && app.get('hasCompletedInternship', false) == true)
+        || (certId is string
+          && certId.size() > 0
+          && get(/databases/$(database)/documents/certificates/$(certId)).data.status == 'Valid'
+          && (get(/databases/$(database)/documents/certificates/$(certId)).data.studentId == uid
+            || get(/databases/$(database)/documents/certificates/$(certId)).data.studentUid == uid));
+    }
+
+    function completedCycle(uid) {
+      let app = enrollmentApplication(uid);
+      let cycle = app.get('currentInternshipNumber', 1);
+      return cycle is int ? cycle : 1;
+    }
+
+    match /enrollmentRequests/{requestId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'Pending'
+        && request.resource.data.hasCompletedInternship == true
+        && hasCompletedInternship(request.auth.uid)
+        && request.resource.data.cycleNumber == completedCycle(request.auth.uid) + 1
+        && request.resource.data.keys().hasAll(['uid','name','email','status','requestedTrack','requestedAt','cycleNumber','hasCompletedInternship','completedTrack','completedCertificateId','completedAt','previousBatch','updatedAt'])
+        && request.resource.data.keys().hasOnly(['uid','name','email','status','requestedTrack','requestedAt','cycleNumber','hasCompletedInternship','completedTrack','completedCertificateId','completedAt','previousBatch','updatedAt']);
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.uid == request.auth.uid
+          && resource.data.status == 'Rejected'
+          && request.resource.data.status == 'Pending'
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.cycleNumber == resource.data.cycleNumber
+          && hasCompletedInternship(request.auth.uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','requestedTrack','requestedAt','updatedAt']));
+      allow delete: if isAdmin();
     }
 
     match /moderators/{moderatorId} {
