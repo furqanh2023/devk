@@ -10,6 +10,10 @@ service cloud.firestore {
         && request.auth.uid == 'RB2xlRBlJEOwcBu1ENDJBNmYMMF3';
     }
 
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
     // Only these fields may be changed by the owner in their profile.
     // Email, UID, application status, batch assignment, serials and
     // certificate identifiers are deliberately excluded from this list.
@@ -99,11 +103,7 @@ service cloud.firestore {
     // A student can request the next internship only after a verified
     // completion certificate exists for their current internship cycle.
     function enrollmentApplication(uid) {
-      // Completion and cycle markers are mirrored to students/{uid} when
-      // a certificate is issued or the next internship is approved.
-      // Use this canonical UID-based document path; Firestore Rules cannot
-      // interpolate a variable inside a literal path segment like application_$(uid).
-      return get(/databases/$(database)/documents/students/$(uid)).data;
+      return get(/databases/$(database)/documents/applications/application_$(uid)).data;
     }
 
     function hasCompletedInternship(uid) {

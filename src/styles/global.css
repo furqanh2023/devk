@@ -3820,3 +3820,311 @@ td small.table-sub {
   .profile-completion-seal { display: none; }
   .previous-completion-cell { min-width: 145px; }
 }
+
+/* Responsive hardening v1.0.8 — CSS-only; preserve app behavior and data logic. */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+}
+body {
+  overflow-x: hidden;
+}
+.workspace-shell,
+.workspace-main,
+.page-container,
+.page-title,
+.student-workspace,
+.admin-workspace,
+.sidebar,
+.student-sidebar,
+.topbar,
+.panel,
+.student-status-banner,
+.completion-panel,
+.content-grid,
+.stat-grid,
+.detail-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+.page-container > *,
+.page-title > *,
+.panel > *,
+.student-status-banner > *,
+.completion-panel > *,
+.completion-panel-main > * {
+  min-width: 0;
+}
+.page-title p,
+.student-status-banner p,
+.completion-copy p,
+.panel p,
+.panel-heading h2,
+.detail-grid b,
+.announcement-item,
+.app-footer,
+.app-footer span {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+.table-scroll,
+.table-wrap,
+.data-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .workspace-shell {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow-x: clip;
+  }
+  .sidebar,
+  .student-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 0 auto;
+    padding-left: 18px;
+    padding-right: 18px;
+    overflow: hidden;
+  }
+  .student-sidebar .brand {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .student-welcome {
+    min-width: 0;
+    max-width: 100%;
+    margin-bottom: 12px;
+  }
+  .student-welcome > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .sidebar-nav {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    gap: 8px;
+    padding: 4px 0 9px;
+    scrollbar-width: thin;
+  }
+  .sidebar-nav section {
+    display: contents;
+  }
+  .sidebar-nav .nav-label {
+    display: none;
+  }
+  .sidebar-nav .nav-link {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .workspace-main {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .topbar {
+    width: 100%;
+    min-width: 0;
+    gap: 10px;
+  }
+  .page-container {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding-left: clamp(16px, 4vw, 24px);
+    padding-right: clamp(16px, 4vw, 24px);
+  }
+  .page-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .page-title > div,
+  .page-title p {
+    width: 100%;
+    max-width: 100%;
+  }
+  .student-status-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 20px;
+  }
+  .student-status-banner > div {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .student-status-banner .status-badge,
+  .student-status-banner > .btn {
+    max-width: 100%;
+  }
+  .content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app-footer {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  html,
+  body,
+  #root {
+    min-width: 320px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .sidebar,
+  .student-sidebar {
+    padding: 14px 14px 9px;
+  }
+  .sidebar .brand {
+    padding: 0 0 12px;
+  }
+  .brand b {
+    font-size: 15px;
+  }
+  .student-welcome {
+    padding: 11px;
+    border-radius: 12px;
+  }
+  .sidebar-nav {
+    margin-right: -2px;
+    padding-bottom: 8px;
+  }
+  .sidebar-nav .nav-link {
+    padding: 9px 10px;
+    font-size: 11px;
+  }
+  .workspace-main,
+  .page-container,
+  .page-title,
+  .student-status-banner,
+  .panel,
+  .completion-panel,
+  .content-grid,
+  .stat-grid {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  .topbar {
+    height: auto;
+    min-height: 54px;
+    padding: 10px 14px;
+  }
+  .topbar-kicker {
+    min-width: 0;
+    font-size: 11px;
+  }
+  .topbar-actions {
+    min-width: 0;
+    margin-left: auto;
+  }
+  .page-container {
+    padding: 20px 14px 22px;
+  }
+  .page-title {
+    display: flex;
+    margin-bottom: 20px;
+    gap: 8px;
+  }
+  .page-title h1 {
+    font-size: clamp(23px, 6vw, 27px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .page-title p {
+    font-size: 12px;
+    line-height: 1.65;
+    white-space: normal;
+  }
+  .student-status-banner {
+    border-radius: 15px;
+    padding: 17px 16px;
+    margin-bottom: 18px;
+  }
+  .student-status-banner h2 {
+    font-size: 17px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .student-status-banner p {
+    font-size: 12px;
+    white-space: normal;
+  }
+  .stat-grid,
+  .stat-grid.three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stat-card {
+    min-width: 0;
+  }
+  .content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .panel-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reenroll-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    line-height: 1.6;
+  }
+  .app-footer span {
+    max-width: 100%;
+  }
+  .table-scroll,
+  .table-wrap,
+  .data-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  table {
+    max-width: 100%;
+  }
+  .modal-backdrop {
+    padding: 10px;
+  }
+  .modal-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 20px);
+    padding: 16px;
+  }
+}
