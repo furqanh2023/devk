@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && request.auth.uid == 'RB2xlRBlJEOwcBu1ENDJBNmYMMF3';
+    }
+
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Only these fields may be changed by the owner in their profile.
+    // Email, UID, application status, batch assignment, serials and
+    // certificate identifiers are deliberately excluded from this list.
+    function profileFieldsOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'name',
+        'username',
+        'track',
+        'phone',
+        'university',
+        'education',
+        'avatar',
+        'coverUrl',
+        'portfolioUrl',
+        'about',
+        'profileCompleted',
+        'updatedAt'
+      ]);
+    }
+
+    match /applications/{applicationId} {
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.status == 'Pending'
+        && request.resource.data.profileCompleted == false
+        && request.resource.data.keys().hasOnly([
+          'uid', 'name', 'email', 'username', 'status', 'submittedAt',
+          'track', 'batch', 'profileCompleted', 'phone', 'university',
+          'education', 'avatar', 'coverUrl', 'portfolioUrl', 'about',
+          'updatedAt'
+        ]);
+
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid);
+
+      // Ownership is checked against the existing document. The allow-list
+      // blocks changes to protected fields without brittle equality checks
+      // against optional/missing fields.
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == resource.data.uid
+          && profileFieldsOnly());
+
+      allow delete: if isAdmin();
+    }
+
+    match /students/{studentId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid);
+
+      allow create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'name', 'username', 'track', 'phone', 'university', 'education',
+            'avatar', 'coverUrl', 'portfolioUrl', 'about', 'profileCompleted',
+            'updatedAt', 'id', 'studentId'
+          ])
+          // The app may backfill legacy identity fields during profile save,
+          // but their values must equal this document's ID, never a chosen UID.
+          && request.resource.data.id == studentId
+          && request.resource.data.studentId == studentId);
+    }
+
+    match /batches/{batchId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /certificates/{certificateId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /publicCertificates/{certificateId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /moderators/{moderatorId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /settings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Deny every collection not explicitly declared above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

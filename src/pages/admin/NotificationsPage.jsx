@@ -1,0 +1,3 @@
+import React from 'react';
+import PageTitle from '../../components/shared/PageTitle';
+export default function NotificationsPage({notifications}){return <><PageTitle eyebrow="ADMIN / CONTROL CENTER" title="Notifications" description="Application and record events surfaced to the admin workspace."/><section className="panel">{notifications.map(n=><div className="list-row" key={n.id}><span className="notification-symbol">♢</span><div className="row-primary"><b>{n.title}</b><small>{n.body}</small></div><time>{n.time}</time></div>)}{!notifications.length&&<div className="empty-state">You are all caught up. New application and certificate events will appear here.</div>}</section></>}
